@@ -85,12 +85,87 @@ async function createProject(request,reply){
     }
 }
 
-async function updateProject(){
-    return "Update project";
+async function updateProject(request, reply) {
+    try {
+        const { id } = request.params;
+        const { title, description, status } = request.body;
+
+      
+        const attributes = {};
+        if (title) attributes.title = title;
+        if (description) {
+            attributes.body = {
+                value: description,
+                format: "plain_text"
+            };
+        }
+        if (status) attributes.field_status = status;
+
+        
+        const drupalPayload = {
+            data: {
+                type: "node--project",
+                id: id, 
+                attributes: attributes
+            }
+        };
+
+       
+        const response = await fetch(`${DRUPAL_API_URL}/${id}`, {
+            method: 'PATCH', 
+            headers: {
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json'
+            },
+            body: JSON.stringify(drupalPayload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Drupal Error:", JSON.stringify(errorData, null, 2));
+            throw new Error(`Drupal responded with status ${response.status}`);
+        }
+
+        const rawData = await response.json();
+        
+        
+        return { 
+            project: cleanData(rawData.data) 
+        };
+
+    } catch (error) {
+        return reply.code(500).send({ error: error.message });
+    }
 }
 
-async function deleteProject(){
-    return "Delete project";
+async function deleteProject(request, reply) {
+    try {
+        const { id } = request.params;
+        const response = await fetch(`${DRUPAL_API_URL}/${id}`,{
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json'
+            }
+        });
+
+        if (response.status === 404){
+            return reply.code(404).send({ error: "Project not found" });
+        }
+
+        if (!response.ok) {
+            throw new Error(`Drupal responded with status ${response.status}`);
+        }
+
+        return reply.code(200).send({
+            message: "Project deleted successfully",
+            deletedId: id
+        }); 
+    } catch (error) { 
+        return reply.code(500).send({
+            error: error.message
+        });
+    }
 }
 
 export default {
@@ -99,4 +174,4 @@ export default {
     createProject,
     updateProject,
     deleteProject
-}
+};
