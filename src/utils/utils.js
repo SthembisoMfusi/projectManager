@@ -1,10 +1,43 @@
-export function cleanData(data){
-    let rawDescription = data.attributes.body? data.attributes.body.value : "";
+
+export function cleanData(data, included = []) {
+    let rawDescription = data.attributes?.body ? data.attributes.body.value : "";
     let cleanDescription = rawDescription.replace(/<[^>]*>?/gm, '').trim();
+
+    const getIncludedUser = (userId) => {
+        const user = included.find(item => item.id === userId);
+        if (!user) return null;
+       
+        const userName = user.attributes?.display_name || user.attributes?.name || "Unknown User";
+        return { id: user.id, name: userName };
+    };
+
+    let manager = null;
+   
+    if (data.relationships?.field_manager?.data?.id) {
+        manager = getIncludedUser(data.relationships.field_manager.data.id);
+    }
+
+    let teamMembers = [];
+    // Safely check if team members exist
+    if (data.relationships?.field_team_members?.data) {
+        
+        const membersArray = Array.isArray(data.relationships.field_team_members.data) 
+            ? data.relationships.field_team_members.data 
+            : [data.relationships.field_team_members.data];
+
+        teamMembers = membersArray.map(member => {
+            return getIncludedUser(member.id);
+        }).filter(Boolean); // Remove any nulls
+    }
+
+    console.log(`Matching completed for ${data.attributes.title} -> Manager:`, manager?.name || "None");
+
     return {
         id: data.id,
         title: data.attributes.title,
         description: cleanDescription,
-        status: data.attributes.field_status
+        status: data.attributes.field_status,
+        manager: manager,
+        teamMembers: teamMembers
     }
 }

@@ -5,13 +5,18 @@ dotenv.config();
 const DRUPAL_API_URL = process.env.DRUPAL_API_URL;
 async function getAllProjects(request,reply){
     try {
-        const response = await fetch(DRUPAL_API_URL);
+        const fetchUrl = `${DRUPAL_API_URL}?include=field_manager,field_team_members`;
+        console.log("FASTIFY IS FETCHING EXACTLY THIS ->", `"${fetchUrl}"`);
+
+        const response = await fetch(fetchUrl);
         if (!response.ok) {
             throw new Error(`Drupal responded with status ${response.status}`);
         }
         const rawData = await response.json();
+
+        console.log("DID DRUPAL SEND THE USERS?", rawData.included ? "YES!" : "NO!");
         const cleanProjects = rawData.data.map(item => {
-            return cleanData(item);
+            return cleanData(item, rawData.included);
         });
         return {
             projects: cleanProjects
@@ -24,7 +29,7 @@ async function getAllProjects(request,reply){
 async function getProjectById(request,reply){
     try {
         const { id } = request.params;
-        const response = await fetch(`${DRUPAL_API_URL}/${id}`);
+        const response = await fetch(`${DRUPAL_API_URL}/${id}?inlcude=field_manager,field_team_members`);
         if (response.status === 404){
             return reply.code(404).send({ error: "Project not found" });
         }
@@ -32,7 +37,7 @@ async function getProjectById(request,reply){
             throw new Error(`Drupal responded with status ${response.status}`);
         }
         const rawData = await response.json();
-        const cleanProject = cleanData(rawData.data);
+        const cleanProject = cleanData(rawData.data, rawData.included);
         return {
             project: cleanProject
         };
