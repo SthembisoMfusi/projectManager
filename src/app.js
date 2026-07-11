@@ -2,10 +2,17 @@ import Fastify from "fastify";
 import projectRoutes from "./routes/project.routes.js";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import cors from "@fastify/cors";  
+
+
 
 const fastify = Fastify({
     logger: true
 });
+
+fastify.register(cors, {
+    origin: "*",
+})
 
 fastify.register(swagger, {
     openapi: {
