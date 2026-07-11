@@ -1,8 +1,10 @@
 import Fastify from "fastify";
-import projectRoutes from "./routes/project.routes.js";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import cors from "@fastify/cors";  
+
+import projectRoutes from "./routes/project.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 
 
@@ -32,6 +34,7 @@ fastify.register(swaggerUi, {
     }
 });
 fastify.register(projectRoutes, { prefix: '/api/projects' });
+fastify.register(userRoutes, { prefix: '/api/users' });
 
 const start = async () => {
     try { 

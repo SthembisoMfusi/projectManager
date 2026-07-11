@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 import { cleanData } from "../utils/utils.js";
 dotenv.config();
-
-const DRUPAL_API_URL = process.env.DRUPAL_API_URL;
+const projectsEndpoint = 'node/project';
+const DRUPAL_API_URL = process.env.DRUPAL_API_URL + projectsEndpoint;
 async function getAllProjects(request,reply){
     try {
         const fetchUrl = `${DRUPAL_API_URL}?include=field_manager,field_team_members`;
