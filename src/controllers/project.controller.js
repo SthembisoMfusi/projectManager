@@ -6,15 +6,12 @@ const DRUPAL_API_URL = process.env.DRUPAL_API_URL + projectsEndpoint;
 async function getAllProjects(request,reply){
     try {
         const fetchUrl = `${DRUPAL_API_URL}?include=field_manager,field_team_members`;
-        console.log("FASTIFY IS FETCHING EXACTLY THIS ->", `"${fetchUrl}"`);
-
         const response = await fetch(fetchUrl);
         if (!response.ok) {
             throw new Error(`Drupal responded with status ${response.status}`);
         }
         const rawData = await response.json();
 
-        console.log("DID DRUPAL SEND THE USERS?", rawData.included ? "YES!" : "NO!");
         const cleanProjects = rawData.data.map(item => {
             return cleanData(item, rawData.included);
         });
@@ -51,23 +48,41 @@ async function getProjectById(request,reply){
     }
 }
 
-async function createProject(request,reply){
+async function createProject(request, reply) {
     try {
-        const { title, description, status } = request.body;
+        const { title, description, status, managerId, teamMemberIds } = request.body;
+
         const drupalPayload = {
             data: {
                 type: "node--project",
                 attributes: {
                     title: title,
-                    body: {
-                        value: description,
-                        format: "plain_text"
-                    },
+                    body: { value: description, format: "plain_text" },
                     field_status: status || "not_started"
                 }
             }
+        };
+
+        if (managerId || (teamMemberIds && teamMemberIds.length > 0)) {
+            drupalPayload.data.relationships = {};
+            
+            if (managerId) {
+                drupalPayload.data.relationships.field_manager = {
+                    data: { type: "user--user", id: managerId }
+                };
+            }
+            
+            if (teamMemberIds && teamMemberIds.length > 0) {
+                drupalPayload.data.relationships.field_team_members = {
+                    data: teamMemberIds.map(id => ({ type: "user--user", id: id }))
+                };
+            }
         }
-        const response = await fetch(DRUPAL_API_URL, {
+
+        
+        
+        const fetchUrl = `${DRUPAL_API_URL}?include=field_manager,field_team_members`;
+        const response = await fetch(fetchUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/vnd.api+json",
@@ -75,27 +90,28 @@ async function createProject(request,reply){
             },
             body: JSON.stringify(drupalPayload)
         });
+
         if (!response.ok) {
-            throw new Error(`Drupal responded with status ${response.status}`);
+            const errorText = await response.text(); 
+            throw new Error(`Drupal error ${response.status}`);
         }
+
+     
         const rawData = await response.json();
-        const cleanProject = cleanData(rawData.data);
-        return {
-            project: cleanProject
-        };
+      
+        const cleanProject = cleanData(rawData.data, rawData.included || []); 
+        return reply.code(201).send({ project: cleanProject });
+
     } catch (error) {
-        return reply.code(500).send({
-            error: error.message
-        })
+        console.error("FATAL CRASH IN CONTROLLER:", error);
+        return reply.code(500).send({ error: error.message });
     }
 }
-
 async function updateProject(request, reply) {
     try {
         const { id } = request.params;
-        const { title, description, status } = request.body;
+        const { title, description, status, managerId, teamMemberIds } = request.body;
 
-      
         const attributes = {};
         if (title) attributes.title = title;
         if (description) {
@@ -106,7 +122,6 @@ async function updateProject(request, reply) {
         }
         if (status) attributes.field_status = status;
 
-        
         const drupalPayload = {
             data: {
                 type: "node--project",
@@ -115,8 +130,25 @@ async function updateProject(request, reply) {
             }
         };
 
-       
-        const response = await fetch(`${DRUPAL_API_URL}/${id}`, {
+        if (managerId || teamMemberIds) {
+            drupalPayload.data.relationships = {};
+
+            if (managerId) {
+                drupalPayload.data.relationships.field_manager = {
+                    data: { type: "user--user", id: managerId }
+                };
+            }
+
+            if (teamMemberIds) {
+                drupalPayload.data.relationships.field_team_members = {
+                    data: teamMemberIds.map(userId => ({ type: "user--user", id: userId }))
+                };
+            }
+        }
+
+        const fetchUrl = `${DRUPAL_API_URL}/${id}?include=field_manager,field_team_members`;
+
+        const response = await fetch(fetchUrl, {
             method: 'PATCH', 
             headers: {
                 'Accept': 'application/vnd.api+json',
@@ -133,15 +165,15 @@ async function updateProject(request, reply) {
 
         const rawData = await response.json();
         
-        
         return { 
-            project: cleanData(rawData.data) 
+            project: cleanData(rawData.data, rawData.included || []) 
         };
 
     } catch (error) {
         return reply.code(500).send({ error: error.message });
     }
 }
+
 
 async function deleteProject(request, reply) {
     try {

@@ -9,7 +9,7 @@ async function getAllUsers(request, reply){
         const response = await fetch(DRUPAL_API_URL);
         const rawData = await response.json();
 
-        const users = rawData.data.map(item => cleanUser(item));
+        const users = rawData.data.map(item => cleanUser(item)).filter(user => user.name !== "Anonymous");
         return {
             users: users
         };

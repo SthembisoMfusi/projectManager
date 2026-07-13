@@ -42,18 +42,24 @@ export function cleanData(data, included = []) {
     }
 }
 
-export function cleanUser(data){
+export function cleanUser(data) {
+    
     let roles = [];
     if (data.relationships?.roles?.data) {
-        roles = data.relationships.roles.map(role => {
-            return role.meta?.drupal_internal?.target_id;
+        
+        const rolesArray = Array.isArray(data.relationships.roles.data) 
+            ? data.relationships.roles.data 
+            : [data.relationships.roles.data];
+        roles = rolesArray.map(role => {
+            return role.meta?.drupal_internal__target_id;
         }).filter(Boolean);
     }
+
     return {
         id: data.id,
-        name: data.attributes.display_name || data.attributes?.name || "Unknown User",
-        email: data.attributes.mail || "Unknown Email",
-        isActive: data.attributes?.status,
-        roles: roles
+        name: data.attributes?.display_name || data.attributes?.name || "Unknown User",
+        email: data.attributes?.mail || "",
+        isActive: data.attributes?.status, 
+        roles: roles 
     };
 }

@@ -3,7 +3,9 @@ import ProjectController from "../controllers/project.controller.js";
 const projectProperties = {
     title: { type: 'string' },
     description: { type: 'string' },
-    status: { type: 'string', enum: ['not_started', 'in_progress', 'completed'] }
+    status: { type: 'string', enum: ['not_started', 'in_progress', 'completed'] },
+    managerId: { type: 'string' },
+    teamMemberIds: { type: 'array', items: { type: 'string' } }
 };
 
 const getAllProjectsSchema = { tags: ['Projects'], summary: 'Get all projects' };

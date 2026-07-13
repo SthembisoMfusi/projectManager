@@ -12,9 +12,10 @@ const fastify = Fastify({
     logger: true
 });
 
-fastify.register(cors, {
-    origin: "*",
-})
+fastify.register(cors, { 
+  origin: "*",
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+});
 
 fastify.register(swagger, {
     openapi: {
@@ -29,7 +30,7 @@ fastify.register(swagger, {
 fastify.register(swaggerUi, {
     routePrefix: "/docs",
     uiConfig: {
-        docExpansion: "full",
+        docExpansion: "list",
         deepLinking: false
     }
 });
