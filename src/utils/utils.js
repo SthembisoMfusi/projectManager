@@ -63,3 +63,15 @@ export function cleanUser(data) {
         roles: roles 
     };
 }
+
+export const getAuthHeaders = (request) => {
+    const headers = {
+        'Accept': 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json'
+    };
+
+    if (request.headers.authorization) {
+        headers['Authorization'] = request.headers.authorization;
+    }
+    return headers;
+}

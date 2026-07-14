@@ -30,11 +30,24 @@ const updateUserSchema = {
     }
 };
 
+const loginSchema = {
+    tags: ['Auth'],
+    summary: 'Login to get JWT token',
+    body: {
+        type: 'object',
+        required: ['username', 'password'],
+        properties: {
+            username: { type: 'string' },
+            password: { type: 'string' }
+        }
+    }
+}
 
 export default async function userRoutes(fastify, options) {
-    fastify.get('/', { schema: getAllUsersSchema }, UserController.getAllUsers);
-    fastify.get('/:id', { schema: getUserByIdSchema }, UserController.getUserById);
-    fastify.post('/', { schema: createUserSchema }, UserController.createUser);
-    fastify.put('/:id', { schema: updateUserSchema }, UserController.updateUser);
-    fastify.delete('/:id', { schema: deleteUserSchema }, UserController.deleteUser);
+    fastify.get('/api/users', { schema: getAllUsersSchema }, UserController.getAllUsers);
+    fastify.get('/api/users/:id', { schema: getUserByIdSchema }, UserController.getUserById);
+    fastify.post('/api/users', { schema: createUserSchema }, UserController.createUser);
+    fastify.put('/api/users/:id', { schema: updateUserSchema }, UserController.updateUser);
+    fastify.delete('/api/users/:id', { schema: deleteUserSchema }, UserController.deleteUser);
+    fastify.post('/api/login', { schema: loginSchema }, UserController.loginUser);
 }

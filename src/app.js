@@ -34,8 +34,8 @@ fastify.register(swaggerUi, {
         deepLinking: false
     }
 });
-fastify.register(projectRoutes, { prefix: '/api/projects' });
-fastify.register(userRoutes, { prefix: '/api/users' });
+fastify.register(projectRoutes); 
+fastify.register(userRoutes);    
 
 const start = async () => {
     try { 
