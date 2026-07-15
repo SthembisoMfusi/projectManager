@@ -1,13 +1,34 @@
 import { cleanData } from '../utils/utils.js';
+import dotenv from 'dotenv';
 
-
+dotenv.config();
+const getAuthHeaders = (request) => {
+    try {
+        const headers = {
+            'Accept': 'application/vnd.api+json',
+            'Content-Type': 'application/vnd.api+json'
+        };
+        
+       
+        if (request.headers && request.headers.authorization) {
+            headers['Authorization'] = request.headers.authorization;
+        }
+        
+        return headers;
+    } catch (err) {
+        console.error("CRASH IN GET AUTH HEADERS:", err);
+        throw err;
+    }
+};
 const DRUPAL_BASE_URL = process.env.DRUPAL_BASE_URL;
 const DRUPAL_API_URL = `${DRUPAL_BASE_URL}/jsonapi/node/project`;
 
 
 async function getAllProjects(request, reply) {
     try {
-        const response = await fetch(`${DRUPAL_API_URL}?include=field_manager,field_team_members`);
+        const response = await fetch(`${DRUPAL_API_URL}?include=field_manager,field_team_members`,{
+            headers: getAuthHeaders(request)
+        });
         if (!response.ok) throw new Error(`Drupal responded with status ${response.status}`);
         
         const rawData = await response.json();
@@ -22,7 +43,9 @@ async function getAllProjects(request, reply) {
 async function getProjectById(request, reply) {
     try {
         const { id } = request.params;
-        const response = await fetch(`${DRUPAL_API_URL}/${id}?include=field_manager,field_team_members`);
+        const response = await fetch(`${DRUPAL_API_URL}/${id}?include=field_manager,field_team_members`,{
+            headers: getAuthHeaders(request)
+        });
         
         if (response.status === 404) return reply.code(404).send({ error: "Project not found" });
         if (!response.ok) throw new Error(`Drupal responded with status ${response.status}`);
